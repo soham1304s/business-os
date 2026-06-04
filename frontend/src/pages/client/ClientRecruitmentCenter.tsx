@@ -1,0 +1,220 @@
+import { useState, useEffect, useRef } from 'react';
+import { Users, UserPlus, Briefcase, Bot, Clock, CheckCircle, Send, X } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { RecruitmentServiceRequestModal } from '../../components/client/RecruitmentServiceRequestModal';
+import { useAuthStore } from '../../store/authStore';
+import { API_URL } from '../../config';
+
+export function ClientRecruitmentCenter() {
+  const [showModal, setShowModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const { token } = useAuthStore();
+  
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>({
+    openRoles: 0,
+    totalCandidates: 0,
+    hiresThisMonth: 0,
+    avgTimeToHire: 0,
+    candidatesByStage: {}
+  });
+
+  const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([
+    { role: 'assistant', content: 'Hi there! I am your AI Hiring Assistant. Ask me about your recruitment pipeline, how to structure a job description, or average salaries for a role.' }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const fetchData = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Fetch Jobs
+      const jobsRes = await fetch(`${API_URL}/api/recruitment/jobs`, { headers });
+      if (jobsRes.ok) setJobs(await jobsRes.json());
+
+      // Fetch Stats
+      const statsRes = await fetch(`${API_URL}/api/recruitment/stats`, { headers });
+      if (statsRes.ok) setStats(await statsRes.json());
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [token]);
+
+  useEffect(() => {
+    if (showChat) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, showChat]);
+
+  const handleSendMessage = async () => {
+    if (!chatInput.trim()) return;
+    
+    const newMessages = [...chatMessages, { role: 'user', content: chatInput }];
+    setChatMessages(newMessages);
+    setChatInput('');
+    setIsTyping(true);
+
+    try {
+      const res = await fetch(`${API_URL}/api/ai/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ messages: newMessages })
+      });
+      
+      const data = await res.json();
+      setChatMessages([...newMessages, { role: 'assistant', content: data.message || "I'm having trouble connecting right now." }]);
+    } catch (err) {
+      console.error(err);
+      setChatMessages([...newMessages, { role: 'assistant', content: "Sorry, I encountered a network error." }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col p-8 space-y-8 overflow-y-auto custom-scrollbar bg-[#FAFAFA] relative">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+              <UserPlus className="w-6 h-6" />
+            </div>
+            Recruitment Hub
+          </h1>
+          <p className="text-sm text-slate-500 mt-2 font-medium">Track your active hiring pipelines and request new talent.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => setShowChat(true)} variant="outline" className="shadow-sm">
+            <Bot className="w-4 h-4 mr-2 text-indigo-500" />
+            Ask Hiring Assistant
+          </Button>
+          <Button onClick={() => setShowModal(true)} variant="primary" className="bg-blue-600 hover:bg-blue-700 border-none shadow-lg shadow-blue-500/20">
+            <UserPlus className="w-4 h-4 mr-2" />
+            New Hiring Request
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+          <div className="flex items-center gap-3 mb-4">
+            <Briefcase className="w-5 h-5 text-blue-500" />
+            <h3 className="font-bold text-slate-800">Open Requisitions</h3>
+          </div>
+          <div className="text-3xl font-bold text-slate-900 mb-2">{stats.openRoles}</div>
+          <p className="text-sm text-slate-500">Currently actively sourcing</p>
+        </div>
+        
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+          <div className="flex items-center gap-3 mb-4">
+            <Users className="w-5 h-5 text-indigo-500" />
+            <h3 className="font-bold text-slate-800">Total Candidates</h3>
+          </div>
+          <div className="text-3xl font-bold text-slate-900 mb-2">{stats.totalCandidates}</div>
+          <p className="text-sm text-slate-500">Across all pipelines</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+          <div className="flex items-center gap-3 mb-4">
+            <CheckCircle className="w-5 h-5 text-emerald-500" />
+            <h3 className="font-bold text-slate-800">Hires this Year</h3>
+          </div>
+          <div className="text-3xl font-bold text-slate-900 mb-2">{stats.hiresThisMonth}</div>
+          <p className="text-sm text-slate-500">Time-to-hire average: {stats.avgTimeToHire} days</p>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 flex-1">
+        <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+          <Users className="w-5 h-5 text-indigo-500" />
+          Active Hiring Pipelines
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {jobs.filter(job => job.status === 'OPEN').length === 0 ? (
+            <div className="col-span-2 p-8 text-center text-slate-500">No active hiring pipelines found. Create a new request!</div>
+          ) : (
+            jobs.filter(job => job.status === 'OPEN').map(job => (
+              <div key={job.id} className="p-5 rounded-2xl border border-slate-100 bg-slate-50 hover:border-blue-200 transition-colors">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-lg">{job.title}</h4>
+                    <p className="text-sm text-slate-500 mt-1">{job.department} &bull; {job.location}</p>
+                  </div>
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full uppercase tracking-wider">{job.status}</span>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-slate-600">
+                  <div className="flex items-center gap-1.5"><Users className="w-4 h-4 text-slate-400"/> {job._count?.candidates || 0} Sourced</div>
+                  <div className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-slate-400"/> Actively Interviewing</div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {showModal && <RecruitmentServiceRequestModal onClose={() => { setShowModal(false); fetchData(); }} />}
+
+      {/* AI Hiring Assistant Modal */}
+      {showChat && (
+        <div className="fixed bottom-6 right-6 w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden z-50">
+          <div className="bg-indigo-600 p-4 flex justify-between items-center text-white shrink-0">
+            <div className="flex items-center gap-2">
+              <Bot className="w-5 h-5" />
+              <h3 className="font-bold">AI Hiring Assistant</h3>
+            </div>
+            <button onClick={() => setShowChat(false)} className="text-indigo-200 hover:text-white transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="h-80 p-4 overflow-y-auto bg-slate-50 flex flex-col gap-3">
+            {chatMessages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none shadow-sm'}`}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] rounded-2xl px-4 py-2 text-sm bg-white border border-slate-200 text-slate-500 rounded-bl-none shadow-sm flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+          <div className="p-3 border-t border-slate-100 bg-white flex items-center gap-2 shrink-0">
+            <input 
+              type="text" 
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Ask about hiring..." 
+              className="flex-1 bg-slate-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 border-none"
+            />
+            <button 
+              onClick={handleSendMessage}
+              disabled={!chatInput.trim() || isTyping}
+              className="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

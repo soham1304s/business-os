@@ -1,0 +1,9 @@
+src/pages/client/ClientDashboard.tsx(3,34): error TS6133: 'LayoutDashboard' is declared but its value is never read.
+src/pages/client/ClientDashboard.tsx(4,3): error TS6133: 'Calendar' is declared but its value is never read.
+src/pages/client/ClientDashboard.tsx(4,13): error TS6133: 'Clock' is declared but its value is never read.
+src/pages/client/ClientDashboard.tsx(4,20): error TS6133: 'AlertCircle' is declared but its value is never read.
+src/pages/client/ClientDashboard.tsx(4,33): error TS6133: 'Bot' is declared but its value is never read.
+src/pages/client/ClientDashboard.tsx(4,38): error TS6133: 'TrendingUp' is declared but its value is never read.
+src/pages/client/ClientDashboard.tsx(4,50): error TS6133: 'Users' is declared but its value is never read.
+src/pages/client/ClientDashboard.tsx(4,76): error TS6133: 'Mail' is declared but its value is never read.
+src/pages/client/ClientDashboard.tsx(4,82): error TS6133: 'Building' is declared but its value is never read.

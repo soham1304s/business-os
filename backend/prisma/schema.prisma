@@ -1,0 +1,412 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// CORE / AUTH
+// ==========================================
+
+model Company {
+  id          String    @id @default(uuid())
+  name        String
+  domain      String?   @unique
+  logo        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  
+  users       User[]
+  employees   Employee[]
+  jobs        Job[]
+  leads           Lead[]
+  serviceRequests ServiceRequest[]
+  projects        Project[]
+  campaigns       Campaign[]
+  invoices        Invoice[]
+  automations     Automation[]
+  
+  @@index([deletedAt])
+}
+
+model Role {
+  id          String    @id @default(uuid())
+  name        String    @unique // e.g., "ADMIN", "MANAGER", "EMPLOYEE"
+  description String?
+  permissions String    // JSON string of permissions or basic string
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  users       User[]
+}
+
+model User {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  password    String
+  firstName   String
+  lastName    String
+  avatar      String?
+  companyId   String
+  roleId      String
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  company     Company   @relation(fields: [companyId], references: [id])
+  role        Role      @relation(fields: [roleId], references: [id])
+  
+  activityLogs    ActivityLog[]
+  serviceRequests ServiceRequest[]
+  projects        Project[]
+  invoices        Invoice[]
+  announcements   Announcement[]
+
+  @@index([companyId])
+  @@index([deletedAt])
+}
+
+// ==========================================
+// HR MODULE
+// ==========================================
+
+model Employee {
+  id             String    @id @default(uuid())
+  companyId      String
+  firstName      String
+  lastName       String
+  email          String    @unique
+  phone          String?
+  department     String?
+  designation    String?
+  joiningDate    DateTime
+  salary         Float?
+  status         String    @default("ACTIVE") // ACTIVE, ON_LEAVE, TERMINATED
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  company        Company   @relation(fields: [companyId], references: [id])
+  attendance     Attendance[]
+  leaves         Leave[]
+  payroll        Payroll[]
+
+  @@index([companyId])
+}
+
+model Attendance {
+  id          String    @id @default(uuid())
+  employeeId  String
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      String    // PRESENT, ABSENT, HALF_DAY
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId, date])
+}
+
+model Leave {
+  id          String    @id @default(uuid())
+  employeeId  String
+  type        String    // SICK, CASUAL, ANNUAL
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?
+  status      String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+}
+
+model Payroll {
+  id          String    @id @default(uuid())
+  employeeId  String
+  month       Int
+  year        Int
+  basicSalary Float
+  bonus       Float     @default(0)
+  deductions  Float     @default(0)
+  netSalary   Float
+  status      String    @default("DRAFT") // DRAFT, PAID
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+}
+
+// ==========================================
+// RECRUITMENT ATS MODULE
+// ==========================================
+
+model Job {
+  id          String    @id @default(uuid())
+  companyId   String
+  title       String
+  description String
+  department  String
+  location    String
+  type        String    // FULL_TIME, PART_TIME, CONTRACT
+  status      String    @default("OPEN") // OPEN, CLOSED, DRAFT
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  company     Company   @relation(fields: [companyId], references: [id])
+  candidates  Candidate[]
+
+  @@index([companyId])
+}
+
+model Candidate {
+  id          String    @id @default(uuid())
+  jobId       String
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  resumeUrl   String?
+  stage       String    @default("APPLIED") // APPLIED, SCREENING, INTERVIEW, OFFER, HIRED, REJECTED
+  source      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  job         Job       @relation(fields: [jobId], references: [id])
+
+  @@index([jobId])
+}
+
+// ==========================================
+// CRM MODULE
+// ==========================================
+
+model Lead {
+  id          String    @id @default(uuid())
+  companyId   String
+  name        String
+  email       String?
+  phone       String?
+  companyName String?
+  status      String    @default("NEW") // NEW, CONTACTED, QUALIFIED, LOST
+  score       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  company     Company         @relation(fields: [companyId], references: [id])
+  deals       Deal[]
+  tasks       Task[]
+  serviceRequest ServiceRequest?
+  project     Project?
+
+  @@index([companyId])
+}
+
+model Contact {
+  id          String    @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String    @unique
+  phone       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Deal {
+  id          String    @id @default(uuid())
+  leadId      String
+  title       String
+  value       Float
+  stage       String    // PROSPECT, PROPOSAL, NEGOTIATION, WON, LOST
+  expectedDate DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lead        Lead      @relation(fields: [leadId], references: [id])
+  invoices    Invoice[]
+  
+  @@index([leadId])
+}
+
+model ServiceRequest {
+  id          String    @id @default(uuid())
+  userId      String    // The client requesting the service
+  companyId   String    // The service provider company
+  serviceType String    // HR, Marketing, CRM, etc
+  budget      Float?
+  timeline    String?
+  priority    String    @default("NORMAL") // LOW, NORMAL, HIGH
+  notes       String?
+  status      String    @default("PENDING") // PENDING, REVIEWING, APPROVED, REJECTED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id])
+  company     Company   @relation(fields: [companyId], references: [id])
+  
+  // A service request can spawn a lead
+  leadId      String?   @unique
+  lead        Lead?     @relation(fields: [leadId], references: [id])
+
+  @@index([userId])
+  @@index([companyId])
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  companyId   String
+  clientId    String    // The user who is the client
+  leadId      String?   @unique // Linked CRM Lead
+  title       String
+  description String?
+  status      String    @default("NEW_LEAD") // NEW_LEAD, REQUIREMENT_REVIEW, PROPOSAL_SENT, PAYMENT_RECEIVED, IN_PROGRESS, UNDER_REVIEW, COMPLETED, CLOSED
+  value       Float     @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  company     Company   @relation(fields: [companyId], references: [id])
+  client      User      @relation(fields: [clientId], references: [id])
+  lead        Lead?     @relation(fields: [leadId], references: [id])
+
+  @@index([companyId])
+  @@index([clientId])
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  leadId      String?
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      String    @default("TODO") // TODO, IN_PROGRESS, DONE
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lead        Lead?     @relation(fields: [leadId], references: [id])
+}
+
+// ==========================================
+// MARKETING MODULE
+// ==========================================
+
+model Campaign {
+  id          String    @id @default(uuid())
+  companyId   String
+  name        String
+  type        String    // EMAIL, SOCIAL, ADS
+  status      String    @default("DRAFT") // DRAFT, ACTIVE, COMPLETED
+  budget      Float?
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  company     Company   @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+// ==========================================
+// FINANCE MODULE
+// ==========================================
+
+model Invoice {
+  id          String    @id @default(uuid())
+  companyId   String
+  clientId    String?
+  dealId      String?
+  invoiceNo   String    @unique
+  clientName  String
+  amount      Float
+  tax         Float     @default(0)
+  total       Float
+  status      String    @default("UNPAID") // UNPAID, PAID, OVERDUE
+  dueDate     DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  company     Company   @relation(fields: [companyId], references: [id])
+  client      User?     @relation(fields: [clientId], references: [id])
+  deal        Deal?     @relation(fields: [dealId], references: [id])
+  
+  @@index([companyId])
+  @@index([clientId])
+}
+
+model Expense {
+  id          String    @id @default(uuid())
+  category    String
+  amount      Float
+  date        DateTime
+  receiptUrl  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ==========================================
+// SYSTEM / AUTOMATION MODULE
+// ==========================================
+
+model Automation {
+  id          String    @id @default(uuid())
+  companyId   String
+  name        String
+  trigger     String    // e.g., "NEW_LEAD"
+  action      String    // e.g., "SEND_EMAIL"
+  isActive    Boolean   @default(true)
+  config      String    // JSON config for visual builder
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  company     Company   @relation(fields: [companyId], references: [id])
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  title       String
+  message     String
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+}
+
+model ActivityLog {
+  id          String    @id @default(uuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  details     String?
+  createdAt   DateTime  @default(now())
+
+  user        User?     @relation(fields: [userId], references: [id])
+}
+
+model Announcement {
+  id          String    @id @default(uuid())
+  title       String
+  content     String
+  isActive    Boolean   @default(true)
+  authorId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author      User      @relation(fields: [authorId], references: [id])
+  
+  @@index([authorId])
+}
