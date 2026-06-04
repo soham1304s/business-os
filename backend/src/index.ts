@@ -45,6 +45,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'BusinessOS API is running' });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+export default app;
