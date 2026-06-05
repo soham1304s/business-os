@@ -17,7 +17,7 @@ import { ClientHrRecruitmentCenter } from './pages/client/ClientHrRecruitmentCen
 import { ClientMarketingCenter } from './pages/client/ClientMarketingCenter';
 import { ClientCrmCenter } from './pages/client/ClientCrmCenter';
 import { ClientFinanceCenter } from './pages/client/ClientFinanceCenter';
-import { ClientAutomationCenter } from './pages/client/ClientAutomationCenter';
+import { ClientAiAutomation } from './pages/client/ClientAutomationCenter';
 import { ClientInvoices } from './pages/client/ClientInvoices';
 import { ClientSettings } from './pages/client/ClientSettings';
 
@@ -82,7 +82,7 @@ function App() {
           <Route path="marketing" element={<ClientMarketingCenter />} />
           <Route path="crm" element={<ClientCrmCenter />} />
           <Route path="finance" element={<ClientFinanceCenter />} />
-          <Route path="automation" element={<ClientAutomationCenter />} />
+          <Route path="automation" element={<ClientAiAutomation />} />
           <Route path="projects" element={<ClientProjects />} />
           <Route path="invoices" element={<ClientInvoices />} />
           <Route path="settings" element={<ClientSettings />} />
