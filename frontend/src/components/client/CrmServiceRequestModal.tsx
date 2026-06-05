@@ -3,6 +3,7 @@ import { X, Send, Target } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { API_URL } from '../../config';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from '../../store/toastStore';
 
 interface Props {
   onClose: () => void;
@@ -47,11 +48,11 @@ export function CrmServiceRequestModal({ onClose }: Props) {
       
       setLoading(false);
       onClose();
-      alert('CRM Service Request Submitted! Our sales engineers will review it shortly.');
+      toast.success('CRM Request Submitted', 'CRM Service Request Submitted! Our sales engineers will review it shortly.');
     } catch (err) {
       console.error(err);
       setLoading(false);
-      alert('Error submitting request');
+      toast.error('Submission Failed', 'Error submitting request');
     }
   };
 

@@ -57,7 +57,7 @@ export function Login() {
         </p>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md"
@@ -69,7 +69,7 @@ export function Login() {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700">Email address</label>
               <div className="mt-1">
@@ -115,8 +115,8 @@ export function Login() {
               </div>
             </div>
 
-            <Button variant="primary" className="w-full justify-center py-2.5" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+            <Button variant="primary" className="w-full justify-center py-2.5" isLoading={isLoading} loadingText="Signing in...">
+              Sign in
             </Button>
           </form>
         </div>

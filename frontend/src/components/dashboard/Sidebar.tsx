@@ -4,8 +4,7 @@ import { useAuthStore } from '../../store/authStore';
 
 const NAV_ITEMS = [
   { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'HR Team', path: '/dashboard/hr', icon: Users },
-  { name: 'Recruitment', path: '/dashboard/recruitment', icon: Users },
+  { name: 'HR & Recruitment', path: '/dashboard/hr-recruitment', icon: Users },
   { name: 'Marketing', path: '/dashboard/marketing', icon: Megaphone },
   { name: 'CRM', path: '/dashboard/crm', icon: Target },
   { name: 'Finance', path: '/dashboard/finance', icon: DollarSign },

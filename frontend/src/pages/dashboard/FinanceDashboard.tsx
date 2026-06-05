@@ -49,16 +49,17 @@ export function FinanceDashboard() {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/crm/deals`, {
+      const res = await fetch(`${API_URL}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      const uniqueClients = Array.from(new Set(data.map((d: any) => d.leadId)))
-        .map(id => {
-          const deal = data.find((d: any) => d.leadId === id);
-          return { id: deal.leadId, name: deal.company };
-        });
-      setClients(uniqueClients);
+      const clientUsers = data
+        .filter((u: any) => u.role?.name === 'CLIENT')
+        .map((u: any) => ({
+          id: u.id,
+          name: `${u.firstName} ${u.lastName} (${u.company?.name || 'Unknown Company'})`
+        }));
+      setClients(clientUsers);
     } catch (err) {
       console.error(err);
     }

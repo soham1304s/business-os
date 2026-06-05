@@ -55,7 +55,7 @@ export const register = async (req: Request, res: Response) => {
       });
 
       return user;
-    });
+    }, { timeout: 15000 });
 
     const token = jwt.sign(
       { id: result.id, email: result.email, companyId: result.companyId },

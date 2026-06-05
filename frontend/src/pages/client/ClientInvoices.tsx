@@ -4,6 +4,7 @@ import { DollarSign, FileText, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { API_URL } from '../../config';
 import { useLiveUpdate } from '../../hooks/useLiveUpdate';
+import { toast } from '../../store/toastStore';
 
 interface Invoice {
   id: string;
@@ -96,7 +97,7 @@ export function ClientInvoices() {
             ));
           } catch (err) {
             console.error(err);
-            alert('Payment verification failed');
+            toast.error('Payment Verification Failed', 'There was an error verifying your payment with the server.');
           }
         },
         theme: {
@@ -108,13 +109,13 @@ export function ClientInvoices() {
       const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
         console.error(response.error);
-        alert('Payment failed');
+        toast.error('Payment Failed', response.error?.description || 'Your payment could not be completed.');
       });
       rzp.open();
 
     } catch (err) {
       console.error(err);
-      alert('Could not initiate payment');
+      toast.error('Payment Error', 'Could not initiate the payment process.');
     } finally {
       setProcessingId(null);
     }

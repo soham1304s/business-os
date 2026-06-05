@@ -3,6 +3,7 @@ import { X, Send, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { API_URL } from '../../config';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from '../../store/toastStore';
 
 const SERVICES = [
   'HR Management',
@@ -45,11 +46,11 @@ export function ServiceRequestModal({ onClose, initialService }: Props) {
       
       setLoading(false);
       onClose();
-      alert('Service Request Submitted! An admin will review it shortly.');
+      toast.success('Service Requested', 'Service Request Submitted! An admin will review it shortly.');
     } catch (err) {
       console.error(err);
       setLoading(false);
-      alert('Error submitting request');
+      toast.error('Submission Failed', 'Error submitting request');
     }
   };
 

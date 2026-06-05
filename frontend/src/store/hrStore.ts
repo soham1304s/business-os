@@ -79,8 +79,8 @@ export const useHrStore = create<HrState>((set, get) => ({
   fetchHrRequests: async () => {
     try {
       const token = useAuthStore.getState().token;
-      // Filter strictly for HR Services
-      const res = await fetch(`${API_URL}/api/service-requests?type=HR Management`, {
+      // Filter strictly for HR Services and Recruitment
+      const res = await fetch(`${API_URL}/api/service-requests?type=HR Management,Recruitment`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch HR requests');

@@ -33,7 +33,7 @@ export function AdminLogin() {
       }
 
       login(data.user, data.token);
-      
+
       // Admin dashboard is routed via /dashboard in App.tsx
       navigate('/dashboard');
     } catch (err: any) {
@@ -59,7 +59,7 @@ export function AdminLogin() {
         </p>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md"
@@ -71,7 +71,7 @@ export function AdminLogin() {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300">Admin Email</label>
               <div className="mt-1">
@@ -100,10 +100,10 @@ export function AdminLogin() {
               </div>
             </div>
 
-            <Button variant="primary" className="w-full justify-center py-2.5 bg-indigo-600 hover:bg-indigo-500" disabled={isLoading}>
-              {isLoading ? 'Authenticating...' : 'Secure Login'}
+            <Button variant="primary" className="w-full justify-center py-2.5 bg-indigo-600 hover:bg-indigo-500" isLoading={isLoading} loadingText="Authenticating...">
+              Secure Login
             </Button>
-            
+
             <div className="text-center mt-6">
               <Link to="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
                 Return to Client Portal

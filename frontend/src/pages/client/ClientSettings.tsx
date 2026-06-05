@@ -3,6 +3,7 @@ import { useAuthStore } from '../../store/authStore';
 import { User, Mail, Building, Phone, Shield, Bell, Save } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { API_URL } from '../../config';
+import { toast } from '../../store/toastStore';
 
 export function ClientSettings() {
   const { user, token, login } = useAuthStore();
@@ -40,13 +41,13 @@ export function ClientSettings() {
       if (res.ok) {
         // Update global auth store with new user data
         if (token) login(data.user, token);
-        alert('Settings saved successfully!');
+        toast.success('Settings Saved', 'Your profile details have been updated successfully.');
       } else {
-        alert(data.error || 'Failed to save settings');
+        toast.error('Failed to Save', data.error || 'Could not save your settings.');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred while saving.');
+      toast.error('Network Error', 'An error occurred while saving your settings.');
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,7 @@ export function ClientSettings() {
 
   const handlePasswordUpdate = async () => {
     if (!passwords.currentPassword || !passwords.newPassword) {
-      alert('Please fill in both password fields');
+      toast.error('Validation Error', 'Please fill in both password fields.');
       return;
     }
     
@@ -71,14 +72,14 @@ export function ClientSettings() {
       const data = await res.json();
       
       if (res.ok) {
-        alert('Password updated successfully!');
+        toast.success('Password Updated', 'Your security settings have been updated successfully.');
         setPasswords({ currentPassword: '', newPassword: '' });
       } else {
-        alert(data.error || 'Failed to update password');
+        toast.error('Update Failed', data.error || 'Failed to update password.');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred while updating password.');
+      toast.error('Network Error', 'An error occurred while updating your password.');
     } finally {
       setPasswordLoading(false);
     }

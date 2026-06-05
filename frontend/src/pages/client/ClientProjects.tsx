@@ -5,6 +5,7 @@ import { API_URL } from '../../config';
 import { FileUpload } from '../../components/ui/FileUpload';
 import { Button } from '../../components/ui/Button';
 import { useLiveUpdate } from '../../hooks/useLiveUpdate';
+import { toast } from '../../store/toastStore';
 
 const STAGES = [
   { id: 'NEW_LEAD', label: 'Requirement Review' },
@@ -196,11 +197,11 @@ export function ClientProjects() {
         const updatedProject = { ...selectedProject, status: 'PENDING' };
         setSelectedProject(updatedProject);
         setProjects(prev => prev.map(p => p.id === selectedProject.id ? updatedProject : p));
-        alert('Project successfully submitted to the agency!');
+        toast.success('Project Submitted', 'Your project has been successfully submitted to the agency for review!');
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to submit project');
+      toast.error('Submission Failed', 'Failed to submit the project. Please try again.');
     }
   };
 
@@ -460,7 +461,7 @@ export function ClientProjects() {
                     <FileUpload 
                       label="Drop file here to upload"
                       onUploadSuccess={(url) => {
-                        alert('File uploaded successfully! View at: ' + url);
+                        toast.success('File Uploaded', `Your document was uploaded successfully. Access it here: ${url}`);
                       }} 
                     />
                   </div>

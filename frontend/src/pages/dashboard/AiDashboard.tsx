@@ -2,12 +2,28 @@ import { useState, useEffect } from 'react';
 import { Bot, Zap, Clock, TrendingUp, Activity, Plus, Filter, Settings, Cpu, HardDrive, Inbox, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../store/authStore';
+import { useLiveUpdate } from '../../hooks/useLiveUpdate';
 import { API_URL } from '../../config';
 
 export function AiDashboard() {
   const { token } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'overview' | 'requests'>('overview');
   const [aiRequests, setAiRequests] = useState<any[]>([]);
+  const [automations, setAutomations] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [showDeployModal, setShowDeployModal] = useState(false);
+  const [newAgent, setNewAgent] = useState({ name: '', clientId: '', type: 'LLM Agent', usage: 'Medium' });
+
+  useEffect(() => {
+    fetchRequests();
+    fetchAutomations();
+    fetchClients();
+  }, [token]);
+
+  useLiveUpdate(['new-request', 'update-request', 'metrics-updated'], () => {
+    fetchRequests();
+    fetchAutomations();
+  });
 
   const fetchRequests = async () => {
     try {
@@ -20,9 +36,36 @@ export function AiDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchRequests();
-  }, [token]);
+  const fetchAutomations = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/ai/automations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setAutomations(await res.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const clientUsers = data
+          .filter((u: any) => u.role?.name === 'CLIENT')
+          .map((u: any) => ({
+            id: u.id,
+            name: `${u.firstName} ${u.lastName} (${u.company?.name || 'Unknown Company'})`
+          }));
+        setClients(clientUsers);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const updateRequestStatus = async (id: string, status: string) => {
     try {
@@ -40,11 +83,47 @@ export function AiDashboard() {
     }
   };
 
+  const toggleAgentStatus = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE';
+      await fetch(`${API_URL}/api/ai/automations/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      fetchAutomations();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeployAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await fetch(`${API_URL}/api/ai/automations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(newAgent)
+      });
+      setShowDeployModal(false);
+      setNewAgent({ name: '', clientId: '', type: 'LLM Agent', usage: 'Medium' });
+      fetchAutomations();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
-    <div className="h-full flex flex-col p-2 sm:p-0">
+    <div className="h-full flex flex-col p-2 sm:p-0 relative">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shrink-0">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
             <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
@@ -59,7 +138,7 @@ export function AiDashboard() {
             <Filter className="w-4 h-4 mr-2 text-slate-500" />
             Filter
           </Button>
-          <Button variant="primary" className="bg-purple-600 hover:bg-purple-700 border-none shadow-lg shadow-purple-500/20">
+          <Button onClick={() => setShowDeployModal(true)} variant="primary" className="bg-purple-600 hover:bg-purple-700 border-none shadow-lg shadow-purple-500/20">
             <Plus className="w-4 h-4 mr-2" />
             Deploy New Agent
           </Button>
@@ -105,12 +184,12 @@ export function AiDashboard() {
                   <Bot className="w-5 h-5" />
                 </div>
                 <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-md flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1"/> +4
+                  <TrendingUp className="w-3 h-3 mr-1"/> +{automations.filter(a => a.status === 'ONLINE').length}
                 </span>
               </div>
               <div>
                 <div className="text-sm font-semibold text-slate-500 mb-1">Active Agents</div>
-                <div className="text-3xl font-bold text-slate-900">42</div>
+                <div className="text-3xl font-bold text-slate-900">{automations.length}</div>
               </div>
             </div>
 
@@ -168,24 +247,19 @@ export function AiDashboard() {
                   Deployed Agents
                 </h2>
                 <div className="text-sm font-medium text-slate-500">
-                  Showing 6 of 42
+                  Showing {automations.length} Agents
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  { name: 'Customer Support Bot', client: 'Acme Corp', type: 'LLM Agent', status: 'ONLINE', usage: 'High', latency: '120ms' },
-                  { name: 'Lead Qualifier', client: 'Stark Industries', type: 'Workflow', status: 'ONLINE', usage: 'Medium', latency: '85ms' },
-                  { name: 'Invoice Parser', client: 'Wayne Ent.', type: 'OCR Agent', status: 'OFFLINE', usage: 'Low', latency: '-' },
-                  { name: 'Social Scraper', client: 'Globex', type: 'Automation', status: 'ONLINE', usage: 'High', latency: '240ms' },
-                  { name: 'Onboarding Guide', client: 'Initech', type: 'LLM Agent', status: 'ONLINE', usage: 'Medium', latency: '150ms' },
-                  { name: 'SEO Content Writer', client: 'Acme Corp', type: 'Generator', status: 'ONLINE', usage: 'High', latency: '850ms' }
-                ].map((agent, i) => (
-                  <div key={i} className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col overflow-hidden hover:border-purple-300 transition-colors group">
+                {automations.map((agent) => (
+                  <div key={agent.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col overflow-hidden hover:border-purple-300 transition-colors group">
                     <div className="p-5 border-b border-slate-100 flex justify-between items-start bg-slate-50">
                       <div>
                         <h3 className="font-bold text-slate-900">{agent.name}</h3>
-                        <div className="text-xs text-slate-500 mt-1 font-medium">{agent.client}</div>
+                        <div className="text-xs text-slate-500 mt-1 font-medium">
+                          {agent.client?.company?.name || 'No Client Assigned'}
+                        </div>
                       </div>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                         agent.status === 'ONLINE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'
@@ -215,7 +289,11 @@ export function AiDashboard() {
                           <Settings className="w-3.5 h-3.5 mr-1.5" />
                           Configure
                         </Button>
-                        <Button variant={agent.status === 'ONLINE' ? 'outline' : 'primary'} className={`flex-1 text-xs py-2 ${agent.status !== 'ONLINE' ? 'bg-purple-600 hover:bg-purple-700' : 'text-rose-600 hover:bg-rose-50 hover:border-rose-200'}`}>
+                        <Button 
+                          onClick={() => toggleAgentStatus(agent.id, agent.status)}
+                          variant={agent.status === 'ONLINE' ? 'outline' : 'primary'} 
+                          className={`flex-1 text-xs py-2 ${agent.status !== 'ONLINE' ? 'bg-purple-600 hover:bg-purple-700' : 'text-rose-600 hover:bg-rose-50 hover:border-rose-200'}`}
+                        >
                           {agent.status === 'ONLINE' ? 'Stop' : 'Start Agent'}
                         </Button>
                       </div>
@@ -272,7 +350,7 @@ export function AiDashboard() {
                 <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
                   <p className="text-sm text-amber-800 font-medium leading-relaxed">
                     <strong className="block mb-1">Approaching Rate Limit</strong>
-                    OpenAI token consumption for <span className="font-bold">Acme Corp</span> is high. Consider upgrading their tier or applying rate limiting to the Customer Support Bot.
+                    OpenAI token consumption is high. Consider upgrading tiers or applying rate limiting.
                   </p>
                 </div>
 
@@ -383,6 +461,76 @@ export function AiDashboard() {
         </div>
       )}
 
+      {/* Deploy Agent Modal */}
+      {showDeployModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <Bot className="w-5 h-5 text-purple-500" />
+              Deploy New Agent
+            </h2>
+            <form onSubmit={handleDeployAgent} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Agent Name</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. Customer Support Bot"
+                  value={newAgent.name}
+                  onChange={e => setNewAgent({...newAgent, name: e.target.value})}
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Assign to Client</label>
+                <select
+                  required
+                  value={newAgent.clientId}
+                  onChange={e => setNewAgent({...newAgent, clientId: e.target.value})}
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                >
+                  <option value="">Select a Client...</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id}>{client.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Agent Type</label>
+                <select
+                  required
+                  value={newAgent.type}
+                  onChange={e => setNewAgent({...newAgent, type: e.target.value})}
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                >
+                  <option value="LLM Agent">LLM Agent</option>
+                  <option value="OCR Agent">OCR Agent</option>
+                  <option value="Workflow">Workflow</option>
+                  <option value="Automation">Automation</option>
+                  <option value="Generator">Generator</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Expected Usage</label>
+                <select
+                  required
+                  value={newAgent.usage}
+                  onChange={e => setNewAgent({...newAgent, usage: e.target.value})}
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setShowDeployModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary" className="flex-1 bg-purple-600 hover:bg-purple-700">Deploy Agent</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

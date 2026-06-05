@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../store/authStore';
 import { API_URL } from '../../config';
 import { useLiveUpdate } from '../../hooks/useLiveUpdate';
+import { toast } from '../../store/toastStore';
 
 export function AdminDashboard() {
   const { token } = useAuthStore();
@@ -126,10 +127,10 @@ export function AdminDashboard() {
       if (res.ok) {
         setFullLogs(await res.json());
       } else {
-        alert(`Failed to fetch logs: ${res.status} ${res.statusText}`);
+        toast.error('Log Fetch Failed', `Failed to fetch logs: ${res.status} ${res.statusText}`);
       }
     } catch (err: any) {
-      alert(`Error fetching logs: ${err.message}`);
+      toast.error('Network Error', `Error fetching logs: ${err.message}`);
       console.error('Failed to fetch full logs', err);
     } finally {
       setIsLoadingLogs(false);
@@ -145,10 +146,10 @@ export function AdminDashboard() {
       if (res.ok) {
         setAllRequests(await res.json());
       } else {
-        alert(`Failed to fetch all requests: ${res.status} ${res.statusText}`);
+        toast.error('Fetch Failed', `Failed to fetch all requests: ${res.status} ${res.statusText}`);
       }
     } catch (err: any) {
-      alert(`Error fetching all requests: ${err.message}`);
+      toast.error('Network Error', `Error fetching all requests: ${err.message}`);
       console.error('Failed to fetch all requests', err);
     } finally {
       setIsLoadingAllRequests(false);
@@ -193,11 +194,12 @@ export function AdminDashboard() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        toast.success('Report Generated', 'The user directory report has been downloaded successfully.');
       } else {
-        alert(`Failed to generate report: ${res.status} ${res.statusText}`);
+        toast.error('Generation Failed', `Failed to generate report: ${res.status} ${res.statusText}`);
       }
     } catch (err: any) {
-      alert(`Error generating report: ${err.message}`);
+      toast.error('Network Error', `Error generating report: ${err.message}`);
       console.error('Failed to generate report', err);
     }
   };
@@ -213,9 +215,10 @@ export function AdminDashboard() {
         body: JSON.stringify({ status })
       });
       if (!res.ok) throw new Error('Failed to update status');
+      toast.success('Status Updated', 'The service request status has been updated successfully.');
     } catch (err) {
       console.error(err);
-      alert('Failed to update request status.');
+      toast.error('Update Failed', 'Failed to update request status.');
     }
   };
 

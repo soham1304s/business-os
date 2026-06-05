@@ -6,8 +6,7 @@ import { AiChatBox } from '../ui/AiChatBox';
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, name: 'Command Center', path: '/client' },
-  { icon: Users, name: 'HR Services', path: '/client/hr' },
-  { icon: Users, name: 'Recruitment', path: '/client/recruitment' },
+  { icon: Users, name: 'HR & Recruitment', path: '/client/hr-recruitment' },
   { icon: Megaphone, name: 'Digital Marketing', path: '/client/marketing' },
   { icon: Target, name: 'CRM & Sales', path: '/client/crm' },
   { icon: Shield, name: 'Finance & Compliance', path: '/client/finance' },

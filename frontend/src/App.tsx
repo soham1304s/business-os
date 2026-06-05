@@ -8,14 +8,13 @@ import { useAuthStore } from './store/authStore';
 import { DashboardLayout } from './components/dashboard/DashboardLayout';
 
 import { CrmDashboard } from './pages/dashboard/CrmDashboard';
-import { HrDashboard } from './pages/dashboard/HrDashboard';
+
 import { FinanceDashboard } from './pages/dashboard/FinanceDashboard';
 import { ClientLayout } from './components/dashboard/ClientLayout';
 import { ClientDashboard } from './pages/client/ClientDashboard';
 import { ClientProjects } from './pages/client/ClientProjects';
-import { ClientHrCenter } from './pages/client/ClientHrCenter';
+import { ClientHrRecruitmentCenter } from './pages/client/ClientHrRecruitmentCenter';
 import { ClientMarketingCenter } from './pages/client/ClientMarketingCenter';
-import { ClientRecruitmentCenter } from './pages/client/ClientRecruitmentCenter';
 import { ClientCrmCenter } from './pages/client/ClientCrmCenter';
 import { ClientFinanceCenter } from './pages/client/ClientFinanceCenter';
 import { ClientAutomationCenter } from './pages/client/ClientAutomationCenter';
@@ -24,7 +23,7 @@ import { ClientSettings } from './pages/client/ClientSettings';
 
 import { AdminDashboard } from './pages/dashboard/AdminDashboard';
 import { MarketingDashboard } from './pages/dashboard/MarketingDashboard';
-import { RecruitmentDashboard } from './pages/dashboard/RecruitmentDashboard';
+import { HrRecruitmentDashboard } from './pages/dashboard/HrRecruitmentDashboard';
 import { ProjectsDashboard } from './pages/dashboard/ProjectsDashboard';
 import { AiDashboard } from './pages/dashboard/AiDashboard';
 import { AnalyticsDashboard } from './pages/dashboard/AnalyticsDashboard';
@@ -41,9 +40,14 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode,
   return <>{children}</>;
 }
 
+import { GlobalLoader } from './components/ui/GlobalLoader';
+import { ToastProvider } from './components/ui/ToastProvider';
+
 function App() {
   return (
     <BrowserRouter>
+      <GlobalLoader />
+      <ToastProvider />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
@@ -58,10 +62,9 @@ function App() {
         }>
           <Route index element={<AdminDashboard />} />
           <Route path="crm" element={<CrmDashboard />} />
-          <Route path="hr" element={<HrDashboard />} />
+          <Route path="hr-recruitment" element={<HrRecruitmentDashboard />} />
           <Route path="finance" element={<FinanceDashboard />} />
           <Route path="marketing" element={<MarketingDashboard />} />
-          <Route path="recruitment" element={<RecruitmentDashboard />} />
           <Route path="projects" element={<ProjectsDashboard />} />
           <Route path="ai" element={<AiDashboard />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
@@ -75,9 +78,8 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<ClientDashboard />} />
-          <Route path="hr" element={<ClientHrCenter />} />
+          <Route path="hr-recruitment" element={<ClientHrRecruitmentCenter />} />
           <Route path="marketing" element={<ClientMarketingCenter />} />
-          <Route path="recruitment" element={<ClientRecruitmentCenter />} />
           <Route path="crm" element={<ClientCrmCenter />} />
           <Route path="finance" element={<ClientFinanceCenter />} />
           <Route path="automation" element={<ClientAutomationCenter />} />

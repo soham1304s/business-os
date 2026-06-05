@@ -3,6 +3,7 @@ import { X, Send, Bot } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { API_URL } from '../../config';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from '../../store/toastStore';
 
 interface Props {
   onClose: () => void;
@@ -47,11 +48,11 @@ export function AutomationServiceRequestModal({ onClose }: Props) {
       
       setLoading(false);
       onClose();
-      alert('AI & Automation Request Submitted! Our engineering team will review it shortly.');
+      toast.success('Automation Requested', 'AI & Automation Request Submitted! Our engineering team will review it shortly.');
     } catch (err) {
       console.error(err);
       setLoading(false);
-      alert('Error submitting request');
+      toast.error('Submission Failed', 'Error submitting request');
     }
   };
 

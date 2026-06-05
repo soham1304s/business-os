@@ -66,6 +66,7 @@ model User {
   projects        Project[]
   invoices        Invoice[]
   announcements   Announcement[]
+  automations     Automation[]
 
   @@index([companyId])
   @@index([deletedAt])
@@ -363,15 +364,24 @@ model Expense {
 model Automation {
   id          String    @id @default(uuid())
   companyId   String
+  clientId    String?
   name        String
-  trigger     String    // e.g., "NEW_LEAD"
-  action      String    // e.g., "SEND_EMAIL"
+  type        String    @default("Agent") // e.g., LLM Agent, Workflow, OCR Agent
+  status      String    @default("ONLINE") // ONLINE, OFFLINE
+  usage       String    @default("Medium") // Low, Medium, High
+  latency     String    @default("-")
+  trigger     String    @default("MANUAL")
+  action      String    @default("EXECUTE")
   isActive    Boolean   @default(true)
-  config      String    // JSON config for visual builder
+  config      String    @default("{}") // JSON config
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   company     Company   @relation(fields: [companyId], references: [id])
+  client      User?     @relation(fields: [clientId], references: [id])
+
+  @@index([companyId])
+  @@index([clientId])
 }
 
 model Notification {

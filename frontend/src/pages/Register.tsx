@@ -66,7 +66,7 @@ export function Register() {
         </p>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md"
@@ -78,7 +78,7 @@ export function Register() {
                 {error}
               </div>
             )}
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700">First name</label>
@@ -150,8 +150,8 @@ export function Register() {
               </div>
             </div>
 
-            <Button variant="primary" className="w-full justify-center py-2.5" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Create account'}
+            <Button variant="primary" className="w-full justify-center py-2.5" isLoading={isLoading} loadingText="Creating account...">
+              Create account
             </Button>
           </form>
         </div>

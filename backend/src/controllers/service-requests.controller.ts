@@ -206,7 +206,11 @@ export const getServiceRequests = async (req: AuthRequest, res: Response) => {
     }
     
     if (type) {
-      whereClause.serviceType = type;
+      if (type.includes(',')) {
+        whereClause.serviceType = { in: type.split(',') };
+      } else {
+        whereClause.serviceType = type;
+      }
     }
     
     // Hide drafts from general admin feed
